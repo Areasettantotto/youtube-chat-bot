@@ -1,0 +1,17 @@
+# Node modules
+node_modules/
+
+# Token di autenticazione Google
+token.json
+
+# File di configurazione locali
+.env
+env.txt
+
+# File di log
+logs/
+*.log
+
+# Client secret JSON
+client_secret.json
+client_secret.json
