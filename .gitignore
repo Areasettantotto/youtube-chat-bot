@@ -9,9 +9,9 @@ token.json
 env.txt
 
 # File di log
-logs/
+logs/*
+!logs/.gitkeep
 *.log
 
 # Client secret JSON
-client_secret.json
 client_secret.json
