@@ -225,6 +225,9 @@ function listenChat(auth) {
         }
       }
 
+      // Aggiungi un piccolo delay per assicurare l'ordine corretto dei messaggi
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
       // Poi invia il messaggio di chiusura del gioco
       if (!winnerAnnounced) {
         if (EXTRASCONTO_AL_PIU_VICINO) {
