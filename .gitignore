@@ -1,14 +1,13 @@
 # Node modules
 node_modules/
 
-# Token di autenticazione Google
+# Google Token
 token.json
 
 # File di configurazione locali
 .env
-env.txt
 
-# File di log
+# Log Files
 logs/*
 !logs/.gitkeep
 *.log
@@ -16,5 +15,8 @@ logs/*
 # Client secret JSON
 client_secret.json
 
-# Variante per installazione desktop
+# Desktop version
 index-desktop.js
+
+# instructions Google Console
+google-console-create-project.pdf

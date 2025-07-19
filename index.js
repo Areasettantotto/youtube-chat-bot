@@ -310,7 +310,7 @@ function listenChat(auth) {
         // Intervalli di polling dinamici (in ms)
         const MIN_POLLING = 3000;   // 3 secondi
         const MID_POLLING = 10000;  // 10 secondi
-        const MAX_POLLING = 60000;  // 60 secondi
+        const MAX_POLLING = 30000;  // 30 secondi
         let pollingInterval = MIN_POLLING; // default
 
         while (keepGoing) {
