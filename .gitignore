@@ -4,7 +4,7 @@ node_modules/
 # Google Token
 token.json
 
-# File di configurazione locali
+# Local files configuration
 .env
 
 # Log Files

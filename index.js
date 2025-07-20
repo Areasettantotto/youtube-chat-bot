@@ -4,37 +4,37 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Costanti di configurazione
-const PREZZO_GIUSTO = process.env.PREZZO_GIUSTO;
-const MAX_TENTATIVI = parseInt(process.env.MAX_TENTATIVI, 10); // Default a 10 tentativi se non specificato
-const DURATA_LIVE_MINUTI = parseInt(process.env.DURATA_LIVE, 10) || 30; // Durata live in minuti, default 30
-// Soglie extrasconto configurabili
-const EXTRASCONTO_THRESHOLDS = [
+// Configuration constants
+const CORRECT_PRICE = process.env.CORRECT_PRICE;
+const MAX_ATTEMPTS = parseInt(process.env.MAX_ATTEMPTS, 10); // Default to 10 attempts if not specified
+const LIVE_DURATION_MINUTES = parseInt(process.env.LIVE_DURATION, 10) || 30; // Live duration in minutes, default 30
+// Configurable extra discount thresholds
+const EXTRADISCOUNT_THRESHOLDS = [
   { min: 0, max: 10, sconto: 80 },
   { min: 11, max: 20, sconto: 70 },
-  { min: 21, max: DURATA_LIVE_MINUTI, sconto: 60 }
+  { min: 21, max: LIVE_DURATION_MINUTES, sconto: 60 }
 ];
-const LOGS_DIR = 'logs';
-const SCARTI_LOG_FILE = process.env.SCARTI_LOG_FILE || `${LOGS_DIR}/tentativi_scartati.log`;
-const LOG_TENTATIVI_OK_FILE = process.env.LOG_TENTATIVI_OK_FILE || `${LOGS_DIR}/tentativi_ok.log`;
+const LOGS_DIR = process.env.LOGS_DIR || 'logs';
+const DISCARDS_LOG_FILE = process.env.DISCARDS_LOG_FILE || `${LOGS_DIR}/tentativi_scartati.log`;
+const LOG_ATTEMPTS_SUCCESS_FILE = process.env.LOG_ATTEMPTS_SUCCESS_FILE || `${LOGS_DIR}/tentativi_ok.log`;
 const ERRORI_AVVIO_LOG_FILE = `${LOGS_DIR}/errori_avvio.json`;
 const TENTATIVI_ESAURITI_LOG_FILE = `${LOGS_DIR}/tentativi_esauriti.log`;
-const EXTRASCONTO_AL_PIU_VICINO = process.env.EXTRASCONTO_AL_PIU_VICINO === 'true';
+const EXTRA_DISCOUNT_FOR_THE_NEAREST = process.env.EXTRA_DISCOUNT_FOR_THE_NEAREST === 'true';
 const tentativiPerUtente = {};
-const tentativiUtente = {}; // Salva tutti i tentativi con timestamp
-const tentativiEsauritiAnnunciati = {}; // Traccia chi ha già ricevuto il messaggio di tentativi esauriti
-const ultimoTentativoEsaurito = {}; // Salva l'ultimo tentativo esaurito per utente
+const tentativiUtente = {}; // Stores all attempts with timestamp
+const tentativiEsauritiAnnunciati = {}; // Tracks users who have already received the attempts exhausted message
+const ultimoTentativoEsaurito = {}; // Stores the last exhausted attempt per user
 let winnerAnnounced = false;
 
-// Configurazione OAuth2
+// OAuth2 configuration
 const SCOPES = ['https://www.googleapis.com/auth/youtube.force-ssl'];
 const TOKEN_PATH = 'token.json';
 
 
-// Abilita/disabilita i log
+// Enable/disable logging
 const ENABLE_LOGS = process.env.ENABLE_LOGS === 'true';
 
-// Funzione di autorizzazione per l'API YouTube
+// YouTube API authorization function
 async function authorize(credentials, callback) {
   const { client_secret, client_id, redirect_uris } = credentials.installed;
   const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
@@ -49,7 +49,7 @@ async function authorize(credentials, callback) {
       scope: SCOPES,
     });
     console.log('🔑 Apro il browser per autorizzare il bot...');
-    // Apri il browser automaticamente su tutte le piattaforme
+    // Open the browser automatically on all platforms
     try {
       const open = (await import('open')).default;
       await open(authUrl);
@@ -73,7 +73,7 @@ async function authorize(credentials, callback) {
     });
   }
 }
-// Recupera l'ID della live chat attiva dal canale YouTube
+// Retrieve the active live chat ID from the YouTube channel
 function getLiveChatId(youtube, callback) {
   youtube.liveBroadcasts.list({
     part: 'snippet,status',
@@ -88,7 +88,7 @@ function getLiveChatId(youtube, callback) {
       console.error('❌ Nessuna live trovata nel tuo canale.');
       return;
     }
-    // Cerca la live attiva (status.lifeCycleStatus === 'live')
+    // Find the active live (status.lifeCycleStatus === 'live')
     const live = broadcasts.find(b => b.status && b.status.lifeCycleStatus === 'live');
     if (!live) {
       console.error('❌ Nessuna live attiva trovata.');
@@ -106,13 +106,13 @@ function getLiveChatId(youtube, callback) {
 function listenChat(auth) {
   const youtube = google.youtube({ version: 'v3', auth });
 
-  // Inizializza il polling della chat
+  // Initialize chat polling
   getLiveChatId(youtube, (liveChatId) => {
     console.log('🚀 In ascolto della chat...');
-    // Messaggio di avvio concorso
-    const msgAvvio = `🟢 Inizio del concorso, da questo momento avete ${DURATA_LIVE_MINUTI} minuti di tempo e ${MAX_TENTATIVI} tentativi per ottenere extrasconti straordinari!!`;
+    // Game start message
+    const msgAvvio = `🟢 Inizio del concorso, da questo momento avete ${LIVE_DURATION_MINUTES} minuti di tempo e ${MAX_ATTEMPTS} tentativi per ottenere extrasconti straordinari!!`;
     console.log(msgAvvio);
-    // Invia il messaggio anche nella chat
+    // Send the message also to the chat
     youtube.liveChatMessages.insert({
       part: 'snippet',
       requestBody: {
@@ -128,39 +128,39 @@ function listenChat(auth) {
       console.error('❌ Errore nell\'invio del messaggio di avvio concorso in chat:', err);
     });
 
-    // Inizializza variabili per il polling
+    // Initialize polling variables
     let nextPageToken = null;
     const processedMessageIds = new Set();
     let liveStartTime = null;
 
-    // Funzione per loggare i tentativi
+    // Function to log attempts
     function logAttempt(author, text, status) {
       if (!ENABLE_LOGS) return;
       const log = `[${new Date().toISOString()}] ${status} ${author}: "${text}"\n`;
       if (status === '✅ Tentativo valido') {
-        fs.appendFileSync(LOG_TENTATIVI_OK_FILE, log);
+        fs.appendFileSync(LOG_ATTEMPTS_SUCCESS_FILE, log);
       } else {
-        fs.appendFileSync(SCARTI_LOG_FILE, log);
+        fs.appendFileSync(DISCARDS_LOG_FILE, log);
       }
       console.log(log.trim());
     }
 
-    // Set per tracciare i partecipanti unici
+    // Set to track unique participants
     const partecipantiUnici = new Set();
     function logNuovoPartecipante(author) {
       if (!partecipantiUnici.has(author)) {
         partecipantiUnici.add(author);
         const totale = partecipantiUnici.size;
         const log = `[${new Date().toISOString()}] nuovo partecipante (${author}) (Totali: ${totale})\n`;
-        fs.appendFileSync(LOG_TENTATIVI_OK_FILE, log);
+        fs.appendFileSync(LOG_ATTEMPTS_SUCCESS_FILE, log);
         console.log(log.trim());
       }
     }
 
-    // Funzione per calcolare l'extrasconto in base al minuto
-    // Funzione automatica per calcolare l'extrasconto in base al minuto
+    // Function to calculate the extra discount based on minute
+    // Automatic function to calculate extra discount based on minute
     function calcolaExtrasconto(minuto) {
-      for (const soglia of EXTRASCONTO_THRESHOLDS) {
+      for (const soglia of EXTRADISCOUNT_THRESHOLDS) {
         if (minuto >= soglia.min && minuto <= soglia.max) {
           return soglia.sconto;
         }
@@ -168,14 +168,14 @@ function listenChat(auth) {
       return 0;
     }
 
-    // Funzione per trovare chi si è avvicinato di più al prezzo giusto
+    // Function to find who got closest to the correct price
     function trovaPiuVicino() {
-      if (!EXTRASCONTO_AL_PIU_VICINO) return null;
+      if (!EXTRA_DISCOUNT_FOR_THE_NEAREST) return null;
 
       let piuVicino = null;
       let distanzaMinima = Infinity;
 
-      const prezzoGiusto = parseFloat(PREZZO_GIUSTO);
+      const prezzoGiusto = parseFloat(CORRECT_PRICE);
 
       for (const [utente, tentativi] of Object.entries(tentativiUtente)) {
         for (const tentativo of tentativi) {
@@ -194,13 +194,13 @@ function listenChat(auth) {
       return piuVicino;
     }
 
-    // Timer per la durata della live
+    // Timer for live duration
     const liveTimer = setTimeout(async () => {
-      console.log(`⏰ Tempo scaduto: ${DURATA_LIVE_MINUTI} minuti di live completati.`);
+      console.log(`⏰ Tempo scaduto: ${LIVE_DURATION_MINUTES} minuti di live completati.`);
 
-      // Prima invia i messaggi di tentativi esauriti per chi non li ha ancora ricevuti
+      // First, send the exhausted attempts messages for those who haven't received them yet
       for (const [author, tentativi] of Object.entries(tentativiPerUtente)) {
-        if (tentativi > MAX_TENTATIVI && !tentativiEsauritiAnnunciati[author]) {
+        if (tentativi > MAX_ATTEMPTS && !tentativiEsauritiAnnunciati[author]) {
           try {
             await youtube.liveChatMessages.insert({
               part: 'snippet',
@@ -209,7 +209,7 @@ function listenChat(auth) {
                   liveChatId,
                   type: 'textMessageEvent',
                   textMessageDetails: {
-                    messageText: `⛔ ${author}, hai superato il numero massimo di ${MAX_TENTATIVI} tentativi disponibili. Il tuo ultimo tentativo ${ultimoTentativoEsaurito[author] || 'sconosciuto'} non verrà considerato valido.`
+                    messageText: `⛔ ${author}, hai superato il numero massimo di ${MAX_ATTEMPTS} tentativi disponibili. Il tuo ultimo tentativo ${ultimoTentativoEsaurito[author] || 'sconosciuto'} non verrà considerato valido.`
                   }
                 }
               }
@@ -225,13 +225,13 @@ function listenChat(auth) {
         }
       }
 
-      // Aggiungi un piccolo delay per assicurare l'ordine corretto dei messaggi
+      // Add a small delay to ensure the correct order of messages
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // Poi invia il messaggio di chiusura del gioco
+      // Then send the game closing message
       if (!winnerAnnounced) {
-        if (EXTRASCONTO_AL_PIU_VICINO) {
-          // Con extrasconto al più vicino: mostra il prezzo e cerca il vincitore più vicino
+        if (EXTRA_DISCOUNT_FOR_THE_NEAREST) {
+            // With extra discount for the nearest: show the price and find the closest winner
           const piuVicino = trovaPiuVicino();
           if (piuVicino) {
             const { utente, valore, timestamp } = piuVicino;
@@ -240,7 +240,7 @@ function listenChat(auth) {
             const extrasconto = calcolaExtrasconto(minuto);
 
             if (ENABLE_LOGS) {
-              fs.appendFileSync(LOG_TENTATIVI_OK_FILE, `[${new Date().toISOString()}] PREMIO AL PIÙ VICINO: ${utente} con €${valore} (distanza: €${Math.abs(valore - parseFloat(PREZZO_GIUSTO)).toFixed(2)}) - Extrasconto: ${extrasconto}% - Minuto: ${minuto}\n`);
+              fs.appendFileSync(LOG_ATTEMPTS_SUCCESS_FILE, `[${new Date().toISOString()}] PREMIO AL PIÙ VICINO: ${utente} con €${valore} (distanza: €${Math.abs(valore - parseFloat(CORRECT_PRICE)).toFixed(2)}) - Extrasconto: ${extrasconto}% - Minuto: ${minuto}\n`);
             }
 
             try {
@@ -251,7 +251,7 @@ function listenChat(auth) {
                     liveChatId,
                     type: 'textMessageEvent',
                     textMessageDetails: {
-                      messageText: `⏰ Tempo scaduto! ${utente} si è avvicinato di più al prezzo giusto €${PREZZO_GIUSTO} con €${valore}. Ottieni un extrasconto del ${extrasconto}%! (Tentativo al minuto: ${minuto})`
+                      messageText: `⏰ Tempo scaduto! ${utente} si è avvicinato di più al prezzo giusto €${CORRECT_PRICE} con €${valore}. Ottieni un extrasconto del ${extrasconto}%! (Tentativo al minuto: ${minuto})`
                     }
                   }
                 }
@@ -269,7 +269,7 @@ function listenChat(auth) {
                     liveChatId,
                     type: 'textMessageEvent',
                     textMessageDetails: {
-                      messageText: `⏰ Tempo scaduto! Il prezzo giusto era €${PREZZO_GIUSTO}. Nessuno ha partecipato al concorso!`
+                      messageText: `⏰ Tempo scaduto! Il prezzo giusto era €${CORRECT_PRICE}. Nessuno ha partecipato al concorso!`
                     }
                   }
                 }
@@ -280,7 +280,7 @@ function listenChat(auth) {
             }
           }
         } else {
-          // Senza extrasconto al più vicino: NON mostrare il prezzo
+            // Without extra discount for the nearest: DO NOT show the price
           try {
             await youtube.liveChatMessages.insert({
               part: 'snippet',
@@ -300,17 +300,17 @@ function listenChat(auth) {
           }
         }
       }
-    }, DURATA_LIVE_MINUTI * 60 * 1000);
+    }, LIVE_DURATION_MINUTES * 60 * 1000);
 
-    // Funzione iniziale per il polling della chat
+    // Initial function for polling the chat
     async function pollChat() {
       try {
         let pageToken = nextPageToken;
         let keepGoing = true;
-        // Intervalli di polling dinamici (in ms)
-        const MIN_POLLING = 3000;   // 3 secondi
-        const MID_POLLING = 10000;  // 10 secondi
-        const MAX_POLLING = 30000;  // 30 secondi
+        // Dynamic polling intervals (in ms)
+        const MIN_POLLING = 3000;   // 3 seconds
+        const MID_POLLING = 10000;  // 10 seconds
+        const MAX_POLLING = 30000;  // 30 seconds
         let pollingInterval = MIN_POLLING; // default
 
         while (keepGoing) {
@@ -320,12 +320,12 @@ function listenChat(auth) {
             pageToken: pageToken,
           });
 
-          // Imposta l'orario di inizio live dalla prima chiamata
+            // Set the live start time from the first call
           if (!liveStartTime && res.data.items.length > 0) {
             liveStartTime = new Date(res.data.items[0].snippet.publishedAt);
           }
 
-          // Usa sempre il valore massimo tra pollingIntervalMillis e quello calcolato dinamicamente
+            // Always use the greater value between pollingIntervalMillis and the dynamically calculated one
           if (res.data.pollingIntervalMillis)
             pollingInterval = Math.max(res.data.pollingIntervalMillis, pollingInterval);
 
@@ -333,18 +333,18 @@ function listenChat(auth) {
           if (!nextPageToken) nextPageToken = pageToken;
           const messages = res.data.items;
 
-          // --- LOGICA DINAMICA ---
-          // Regola il polling dinamicamente in base al traffico
+            // --- DYNAMIC LOGIC ---
+            // Adjust polling dynamically based on traffic
           if (messages.length > 10) {
-            pollingInterval = MIN_POLLING; // traffico alto: poll rapido
+            pollingInterval = MIN_POLLING; // high traffic: fast poll
           } else if (messages.length > 2) {
-            pollingInterval = MID_POLLING; // traffico medio
+            pollingInterval = MID_POLLING; // medium traffic
           } else {
-            pollingInterval = MAX_POLLING; // traffico basso: poll lento
+            pollingInterval = MAX_POLLING; // low traffic: slow poll
           }
-          // --- FINE LOGICA DINAMICA ---
+            // --- END OF DYNAMIC LOGIC ---
 
-          // Ordina i messaggi per publishedAt (ordine cronologico crescente)
+            // Sort messages by publishedAt (in ascending order)
           messages.sort((a, b) => new Date(a.snippet.publishedAt) - new Date(b.snippet.publishedAt));
 
           for (const msg of messages) {
@@ -356,10 +356,10 @@ function listenChat(auth) {
             const author = msg.authorDetails.displayName;
             if (!text) continue;
 
-            // Logga nuovo partecipante se è la prima volta che scrive
+            // Log new participant if writing for the first time
             logNuovoPartecipante(author);
 
-            // Solo numeri senza spazi, lettere o altri simboli (solo cifre e opzionale punto decimale)
+            // Only numbers without spaces, letters, or other symbols (only digits and an optional decimal point)
             if (!/^\d+(\.\d+)?$/.test(text)) {
               logAttempt(author, text, '❌ Formato non valido (solo numeri, punto come separatore decimale, nessun altro carattere o spazio)');
               continue;
@@ -376,8 +376,8 @@ function listenChat(auth) {
 
             tentativiPerUtente[author]++;
 
-            if (tentativiPerUtente[author] > MAX_TENTATIVI) {
-              ultimoTentativoEsaurito[author] = numero; // Salva l'ultimo tentativo esaurito
+            if (tentativiPerUtente[author] > MAX_ATTEMPTS) {
+                ultimoTentativoEsaurito[author] = numero; // Save the last exhausted attempt
               logAttempt(author, text, '⚠️ Tentativi esauriti');
               if (!tentativiEsauritiAnnunciati[author]) {
                 try {
@@ -388,7 +388,7 @@ function listenChat(auth) {
                         liveChatId: liveChatId,
                         type: 'textMessageEvent',
                         textMessageDetails: {
-                    messageText: `⛔ ${author}, hai superato il numero massimo di ${MAX_TENTATIVI} tentativi disponibili. Il tuo ultimo tentativo ${ultimoTentativoEsaurito[author] || 'sconosciuto'} non verrà considerato valido.`
+                    messageText: `⛔ ${author}, hai superato il numero massimo di ${MAX_ATTEMPTS} tentativi disponibili. Il tuo ultimo tentativo ${ultimoTentativoEsaurito[author] || 'sconosciuto'} non verrà considerato valido.`
                   }
                       }
                     }
@@ -405,8 +405,8 @@ function listenChat(auth) {
             }
             logAttempt(author, text, '✅ Tentativo valido');
 
-            // Salva il tentativo con timestamp se abilitato (solo per tentativi validi)
-            if (EXTRASCONTO_AL_PIU_VICINO) {
+            // Save the attempt with timestamp if enabled (only for valid attempts)
+            if (EXTRA_DISCOUNT_FOR_THE_NEAREST) {
               if (!tentativiUtente[author]) {
                 tentativiUtente[author] = [];
               }
@@ -416,11 +416,11 @@ function listenChat(auth) {
               });
             }
 
-            // Invia il messaggio di vittoria in chat all'utente che ha indovinato il prezzo esatto!!
-            if (!winnerAnnounced && numero === parseFloat(PREZZO_GIUSTO)) {
+            // Send the victory message in chat to the user who guessed the exact price!!
+            if (!winnerAnnounced && numero === parseFloat(CORRECT_PRICE)) {
               winnerAnnounced = true;
-              clearTimeout(liveTimer); // Ferma il timer della live
-              // Calcola il minuto in cui è stato indovinato
+                clearTimeout(liveTimer); // Stop the live timer
+                // Calculate the minute at which the guess was made
               let extrasconto = 0;
               let minuto = 0;
               if (liveStartTime) {
@@ -436,7 +436,7 @@ function listenChat(auth) {
                       liveChatId,
                       type: 'textMessageEvent',
                       textMessageDetails: {
-                        messageText: `🎉 Complimenti ${author}! Hai indovinato il prezzo scontato esatto: €${PREZZO_GIUSTO}. Puoi acquistare il pack con un extrasconto del ${extrasconto}%. (Indovinato al minuto: ${minuto})`
+                        messageText: `🎉 Complimenti ${author}! Hai indovinato il prezzo scontato esatto: €${CORRECT_PRICE}. Puoi acquistare il pack con un extrasconto del ${extrasconto}%. (Indovinato al minuto: ${minuto})`
                       }
                     }
                   }
@@ -476,7 +476,7 @@ function listenChat(auth) {
   });
 }
 
-// Legge le credenziali dal file client_secret.json
+// Reads credentials from the client_secret.json file
 fs.readFile('client_secret.json', (err, content) => {
   if (err) {
     const errorLog = {
