@@ -15,10 +15,10 @@ const EXTRADISCOUNT_THRESHOLDS = [
   { min: 21, max: LIVE_DURATION_MINUTES, sconto: 60 }
 ];
 const LOGS_DIR = process.env.LOGS_DIR || 'logs';
-const DISCARDS_LOG_FILE = process.env.DISCARDS_LOG_FILE || `${LOGS_DIR}/tentativi_scartati.log`;
-const LOG_ATTEMPTS_SUCCESS_FILE = process.env.LOG_ATTEMPTS_SUCCESS_FILE || `${LOGS_DIR}/tentativi_ok.log`;
-const ERRORI_AVVIO_LOG_FILE = `${LOGS_DIR}/errori_avvio.json`;
-const TENTATIVI_ESAURITI_LOG_FILE = `${LOGS_DIR}/tentativi_esauriti.log`;
+const DISCARDS_LOG_FILE = process.env.DISCARDS_LOG_FILE || `${LOGS_DIR}/discarded_attempts.log`;
+const LOG_ATTEMPTS_SUCCESS_FILE = process.env.LOG_ATTEMPTS_SUCCESS_FILE || `${LOGS_DIR}/valid_attempts.log`;
+const ERROR_STARTING_LOG_FILE = process.env.ERROR_STARTING_LOG_FILE || `${LOGS_DIR}/startup_errors.json`;
+const ATTEMPTS_EXHAUSTED_LOG_FILE = process.env.ATTEMPTS_EXHAUSTED_LOG_FILE || `${LOGS_DIR}/exhausted_attempts.log`;
 const EXTRA_DISCOUNT_FOR_THE_NEAREST = process.env.EXTRA_DISCOUNT_FOR_THE_NEAREST === 'true';
 const tentativiPerUtente = {};
 const tentativiUtente = {}; // Stores all attempts with timestamp
@@ -28,11 +28,25 @@ let winnerAnnounced = false;
 
 // OAuth2 configuration
 const SCOPES = ['https://www.googleapis.com/auth/youtube.force-ssl'];
-const TOKEN_PATH = 'token.json';
+const TOKEN_PATH = process.env.TOKEN_PATH || 'token.json';
+const CLIENT_SECRET_PATH = process.env.CLIENT_SECRET_PATH || 'client_secret.json';
+
+// Polling configuration
+const MIN_POLLING = parseInt(process.env.MIN_POLLING, 10) || 3000;
+const MID_POLLING = parseInt(process.env.MID_POLLING, 10) || 10000;
+const MAX_POLLING = parseInt(process.env.MAX_POLLING, 10) || 30000;
+const MESSAGE_DELAY = parseInt(process.env.MESSAGE_DELAY, 10) || 1000;
+const POLL_ERROR_RETRY = parseInt(process.env.POLL_ERROR_RETRY, 10) || 10000;
 
 
 // Enable/disable logging
 const ENABLE_LOGS = process.env.ENABLE_LOGS === 'true';
+
+// Ensure logs directory exists
+if (ENABLE_LOGS && !fs.existsSync(LOGS_DIR)) {
+  fs.mkdirSync(LOGS_DIR, { recursive: true });
+  console.log(`📁 Directory ${LOGS_DIR} creata automaticamente`);
+}
 
 // YouTube API authorization function
 async function authorize(credentials, callback) {
@@ -215,7 +229,7 @@ function listenChat(auth) {
               }
             });
             if (ENABLE_LOGS) {
-              fs.appendFileSync(TENTATIVI_ESAURITI_LOG_FILE, `[${new Date().toISOString()}] Tentativi esauriti annunciati a fine gioco a ${author}\n`);
+              fs.appendFileSync(ATTEMPTS_EXHAUSTED_LOG_FILE, `[${new Date().toISOString()}] Tentativi esauriti annunciati a fine gioco a ${author}\n`);
             }
             tentativiEsauritiAnnunciati[author] = true;
             console.log(`✅ Messaggio di tentativi esauriti inviato a ${author} a fine gioco`);
@@ -226,7 +240,7 @@ function listenChat(auth) {
       }
 
       // Add a small delay to ensure the correct order of messages
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, MESSAGE_DELAY));
 
       // Then send the game closing message
       if (!winnerAnnounced) {
@@ -308,9 +322,6 @@ function listenChat(auth) {
         let pageToken = nextPageToken;
         let keepGoing = true;
         // Dynamic polling intervals (in ms)
-        const MIN_POLLING = 3000;   // 3 seconds
-        const MID_POLLING = 10000;  // 10 seconds
-        const MAX_POLLING = 30000;  // 30 seconds
         let pollingInterval = MIN_POLLING; // default
 
         while (keepGoing) {
@@ -394,7 +405,7 @@ function listenChat(auth) {
                     }
                   });
                   if (ENABLE_LOGS) {
-                    fs.appendFileSync(TENTATIVI_ESAURITI_LOG_FILE, `[${new Date().toISOString()}] Tentativi esauriti annunciati a ${author}: ${JSON.stringify(resp.data)}\n`);
+                    fs.appendFileSync(ATTEMPTS_EXHAUSTED_LOG_FILE, `[${new Date().toISOString()}] Tentativi esauriti annunciati a ${author}: ${JSON.stringify(resp.data)}\n`);
                   }
                   tentativiEsauritiAnnunciati[author] = true;
                 } catch (err) {
@@ -469,7 +480,7 @@ function listenChat(auth) {
         setTimeout(pollChat, pollingInterval);
       } catch (err) {
         console.error('Errore durante il polling:', err);
-        setTimeout(pollChat, 10000);
+        setTimeout(pollChat, POLL_ERROR_RETRY);
       }
     }
     pollChat();
@@ -477,7 +488,7 @@ function listenChat(auth) {
 }
 
 // Reads credentials from the client_secret.json file
-fs.readFile('client_secret.json', (err, content) => {
+fs.readFile(CLIENT_SECRET_PATH, (err, content) => {
   if (err) {
     const errorLog = {
       timestamp: new Date().toISOString(),
@@ -485,15 +496,15 @@ fs.readFile('client_secret.json', (err, content) => {
       details: err.message || err
     };
     let logs = [];
-    if (fs.existsSync(ERRORI_AVVIO_LOG_FILE)) {
+    if (fs.existsSync(ERROR_STARTING_LOG_FILE)) {
       try {
-        logs = JSON.parse(fs.readFileSync(ERRORI_AVVIO_LOG_FILE));
+        logs = JSON.parse(fs.readFileSync(ERROR_STARTING_LOG_FILE));
       } catch (e) {
         logs = [];
       }
     }
     logs.push(errorLog);
-    fs.writeFileSync(ERRORI_AVVIO_LOG_FILE, JSON.stringify(logs, null, 2));
+    fs.writeFileSync(ERROR_STARTING_LOG_FILE, JSON.stringify(logs, null, 2));
     return console.log('Errore nel leggere client_secret.json:', err);
   }
   authorize(JSON.parse(content), listenChat);
