@@ -1,0 +1,25 @@
+{
+  "contest": {
+    "start": "🟢 Contest started, from now you have {LIVE_DURATION_MINUTES} minutes and {MAX_ATTEMPTS} attempts to get extraordinary extra discounts!!",
+    "attemptsExhausted": "⛔ {author}, you have exceeded the maximum number of {MAX_ATTEMPTS} available attempts. Your last attempt {lastAttempt} will not be considered valid.",
+    "timeExpiredClosestWinner": "⏰ Time expired! {user} got closest to the correct price €{CORRECT_PRICE} with €{value}. Get an extra discount of {extraDiscount}%! (Attempt at minute: {minute})",
+    "timeExpiredNoParticipants": "⏰ Time expired! The correct price was €{CORRECT_PRICE}. Nobody participated in the contest!",
+    "timeExpiredNoWinner": "⏰ Time expired! No winner this time!",
+    "exactWinner": "🎉 Congratulations {author}! You guessed the exact discounted price: €{CORRECT_PRICE}. You can buy the pack with an extra discount of {extraDiscount}%. (Guessed at minute: {minute})",
+    "noMoreAttempts": "⛔ No more attempts are allowed for anyone."
+  },
+  "metadata": {
+    "description": "User-facing messages sent to YouTube chat",
+    "placeholders": {
+      "LIVE_DURATION_MINUTES": "Duration of the live stream in minutes",
+      "MAX_ATTEMPTS": "Maximum number of attempts allowed per user",
+      "author": "Username of the participant",
+      "user": "Username of the winner/participant",
+      "lastAttempt": "Value of the last exhausted attempt",
+      "CORRECT_PRICE": "The correct price to guess",
+      "value": "Price value guessed by user",
+      "extraDiscount": "Extra discount percentage",
+      "minute": "Minute when the attempt was made"
+    }
+  }
+}

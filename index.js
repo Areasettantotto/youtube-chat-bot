@@ -4,26 +4,98 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+// Load user messages from external JSON file
+const MESSAGES_FILE = process.env.MESSAGES_FILE || 'messages/messages.json';
+const MESSAGES_INDEX_FILE = 'messages/index.json';
+let MESSAGES = {};
+let LANGUAGES_CONFIG = {};
+
+// Load languages configuration
+try {
+  LANGUAGES_CONFIG = JSON.parse(fs.readFileSync(MESSAGES_INDEX_FILE, 'utf8'));
+  console.log(`📋 Loaded languages config: ${Object.keys(LANGUAGES_CONFIG.available_languages).length} languages available`);
+} catch (err) {
+  console.warn(`⚠️ Warning: Could not load languages config from ${MESSAGES_INDEX_FILE}:`, err.message);
+}
+
+// Load messages
+try {
+  MESSAGES = JSON.parse(fs.readFileSync(MESSAGES_FILE, 'utf8'));
+  const selectedLang = Object.values(LANGUAGES_CONFIG.available_languages || {})
+    .find(lang => MESSAGES_FILE.includes(lang.file))?.name || 'Unknown';
+  console.log(`🌍 Loaded messages: ${selectedLang} (${MESSAGES_FILE})`);
+} catch (err) {
+  console.error(`❌ Error loading messages file ${MESSAGES_FILE}:`, err.message);
+  console.error('Using default English messages as fallback');
+
+  // Fallback to default English messages
+  const fallbackFile = 'messages/messages.json';
+  try {
+    MESSAGES = JSON.parse(fs.readFileSync(fallbackFile, 'utf8'));
+    console.log(`✅ Loaded fallback messages from ${fallbackFile}`);
+  } catch (fallbackErr) {
+    console.error(`❌ Could not load fallback messages:`, fallbackErr.message);
+    // Hard-coded fallback as last resort
+    MESSAGES = {
+      contest: {
+        start: "🟢 Contest started, from now you have {LIVE_DURATION_MINUTES} minutes and {MAX_ATTEMPTS} attempts to get extraordinary extra discounts!!",
+        attemptsExhausted: "⛔ {author}, you have exceeded the maximum number of {MAX_ATTEMPTS} available attempts. Your last attempt {lastAttempt} will not be considered valid.",
+        timeExpiredClosestWinner: "⏰ Time expired! {user} got closest to the correct price €{CORRECT_PRICE} with €{value}. Get an extra discount of {extraDiscount}%! (Attempt at minute: {minute})",
+        timeExpiredNoParticipants: "⏰ Time expired! The correct price was €{CORRECT_PRICE}. Nobody participated in the contest!",
+        timeExpiredNoWinner: "⏰ Time expired! No winner this time!",
+        exactWinner: "🎉 Congratulations {author}! You guessed the exact discounted price: €{CORRECT_PRICE}. You can buy the pack with an extra discount of {extraDiscount}%. (Guessed at minute: {minute})",
+        noMoreAttempts: "⛔ No more attempts are allowed for anyone."
+      }
+    };
+    console.log(`⚡ Using hard-coded English messages as last resort`);
+  }
+}
+
+// Helper function to replace placeholders in messages
+function formatMessage(template, variables = {}) {
+  let message = template;
+  for (const [key, value] of Object.entries(variables)) {
+    const placeholder = `{${key}}`;
+    message = message.replace(new RegExp(placeholder.replace(/[{}]/g, '\\$&'), 'g'), value || 'unknown');
+  }
+  return message;
+}
+
 // Configuration constants
 const CORRECT_PRICE = process.env.CORRECT_PRICE;
 const MAX_ATTEMPTS = parseInt(process.env.MAX_ATTEMPTS, 10); // Default to 10 attempts if not specified
 const LIVE_DURATION_MINUTES = parseInt(process.env.LIVE_DURATION, 10) || 30; // Live duration in minutes, default 30
+
 // Configurable extra discount thresholds
 const EXTRADISCOUNT_THRESHOLDS = [
-  { min: 0, max: 10, sconto: 80 },
-  { min: 11, max: 20, sconto: 70 },
-  { min: 21, max: LIVE_DURATION_MINUTES, sconto: 60 }
+  { min: 0, max: 10, discount: 80 },
+  { min: 11, max: 20, discount: 70 },
+  { min: 21, max: LIVE_DURATION_MINUTES, discount: 60 }
 ];
+
+// Ensure the environment variables are set
 const LOGS_DIR = process.env.LOGS_DIR || 'logs';
-const DISCARDS_LOG_FILE = process.env.DISCARDS_LOG_FILE || `${LOGS_DIR}/discarded_attempts.log`;
-const LOG_ATTEMPTS_SUCCESS_FILE = process.env.LOG_ATTEMPTS_SUCCESS_FILE || `${LOGS_DIR}/valid_attempts.log`;
-const ERROR_STARTING_LOG_FILE = process.env.ERROR_STARTING_LOG_FILE || `${LOGS_DIR}/startup_errors.json`;
-const ATTEMPTS_EXHAUSTED_LOG_FILE = process.env.ATTEMPTS_EXHAUSTED_LOG_FILE || `${LOGS_DIR}/exhausted_attempts.log`;
+
+// Log filenames with defaults
+const DISCARDS_LOG_FILENAME = process.env.DISCARDS_LOG_FILENAME || 'discarded_attempts.log';
+const LOG_ATTEMPTS_SUCCESS_FILENAME = process.env.LOG_ATTEMPTS_SUCCESS_FILENAME || 'valid_attempts.log';
+const ERROR_STARTING_LOG_FILENAME = process.env.ERROR_STARTING_LOG_FILENAME || 'startup_errors.json';
+const ATTEMPTS_EXHAUSTED_LOG_FILENAME = process.env.ATTEMPTS_EXHAUSTED_LOG_FILENAME || 'exhausted_attempts.log';
+
+// Construct full log file paths directly
+const DISCARDS_LOG_FILE = `${LOGS_DIR}/${DISCARDS_LOG_FILENAME}`;
+const LOG_ATTEMPTS_SUCCESS_FILE = `${LOGS_DIR}/${LOG_ATTEMPTS_SUCCESS_FILENAME}`;
+const ERROR_STARTING_LOG_FILE = `${LOGS_DIR}/${ERROR_STARTING_LOG_FILENAME}`;
+const ATTEMPTS_EXHAUSTED_LOG_FILE = `${LOGS_DIR}/${ATTEMPTS_EXHAUSTED_LOG_FILENAME}`;
+
+// Extra discount for the nearest guess
 const EXTRA_DISCOUNT_FOR_THE_NEAREST = process.env.EXTRA_DISCOUNT_FOR_THE_NEAREST === 'true';
-const tentativiPerUtente = {};
-const tentativiUtente = {}; // Stores all attempts with timestamp
-const tentativiEsauritiAnnunciati = {}; // Tracks users who have already received the attempts exhausted message
-const ultimoTentativoEsaurito = {}; // Stores the last exhausted attempt per user
+
+// Initialize attempt tracking
+const attemptsForUser = {};
+const attemptsUser = {}; // Stores all attempts with timestamp
+const exhaustedAttemptsAnnounced = {}; // Tracks users who have already received the attempts exhausted message
+const lastAttemptWasExhausted = {}; // Stores the last exhausted attempt per user
 let winnerAnnounced = false;
 
 // OAuth2 configuration
@@ -38,14 +110,13 @@ const MAX_POLLING = parseInt(process.env.MAX_POLLING, 10) || 30000;
 const MESSAGE_DELAY = parseInt(process.env.MESSAGE_DELAY, 10) || 1000;
 const POLL_ERROR_RETRY = parseInt(process.env.POLL_ERROR_RETRY, 10) || 10000;
 
-
 // Enable/disable logging
 const ENABLE_LOGS = process.env.ENABLE_LOGS === 'true';
 
 // Ensure logs directory exists
 if (ENABLE_LOGS && !fs.existsSync(LOGS_DIR)) {
   fs.mkdirSync(LOGS_DIR, { recursive: true });
-  console.log(`📁 Directory ${LOGS_DIR} creata automaticamente`);
+  console.log(`📁 Directory ${LOGS_DIR} created automatically`);
 }
 
 // YouTube API authorization function
@@ -62,15 +133,15 @@ async function authorize(credentials, callback) {
       access_type: 'offline',
       scope: SCOPES,
     });
-    console.log('🔑 Apro il browser per autorizzare il bot...');
+    console.log('🔑 Opening browser to authorize the bot...');
     // Open the browser automatically on all platforms
     try {
       const open = (await import('open')).default;
       await open(authUrl);
     } catch (e) {
-      console.log('❌ Impossibile aprire il browser automaticamente. Apri manualmente questo URL:', authUrl);
+      console.log('❌ Unable to open browser automatically. Manually open this URL:', authUrl);
     }
-    process.stdout.write('👉 Incolla qui il codice di autorizzazione: ');
+    process.stdout.write('👉 Paste the authorization code here: ');
     process.stdin.setEncoding('utf8');
     process.stdin.once('data', async (code) => {
       code = code.trim();
@@ -78,10 +149,10 @@ async function authorize(credentials, callback) {
         const { tokens } = await oAuth2Client.getToken(code);
         oAuth2Client.setCredentials(tokens);
         fs.writeFileSync(TOKEN_PATH, JSON.stringify(tokens));
-        console.log('✅ Token salvato in token.json');
+        console.log(`✅ Token saved in ${TOKEN_PATH}`);
         callback(oAuth2Client);
       } catch (err) {
-        console.error('❌ Errore durante il salvataggio del token:', err.message || err);
+        console.error('❌ Error saving token:', err.message || err);
       }
       process.stdin.pause();
     });
@@ -94,23 +165,23 @@ function getLiveChatId(youtube, callback) {
     mine: true
   }, (err, res) => {
     if (err) {
-      console.error('❌ Errore nel recupero della live:', err.message || err);
+      console.error('❌ Error retrieving live stream:', err.message || err);
       return;
     }
     const broadcasts = res.data.items;
     if (!broadcasts || broadcasts.length === 0) {
-      console.error('❌ Nessuna live trovata nel tuo canale.');
+      console.error('❌ No live stream found in your channel.');
       return;
     }
     // Find the active live (status.lifeCycleStatus === 'live')
     const live = broadcasts.find(b => b.status && b.status.lifeCycleStatus === 'live');
     if (!live) {
-      console.error('❌ Nessuna live attiva trovata.');
+      console.error('❌ No active live stream found.');
       return;
     }
     const liveChatId = live.snippet.liveChatId;
     if (!liveChatId) {
-      console.error('❌ Nessun liveChatId trovato nella live attiva.');
+      console.error('❌ No liveChatId found in active live stream.');
       return;
     }
     callback(liveChatId);
@@ -122,10 +193,13 @@ function listenChat(auth) {
 
   // Initialize chat polling
   getLiveChatId(youtube, (liveChatId) => {
-    console.log('🚀 In ascolto della chat...');
+    console.log('🚀 Listening to chat...');
     // Game start message
-    const msgAvvio = `🟢 Inizio del concorso, da questo momento avete ${LIVE_DURATION_MINUTES} minuti di tempo e ${MAX_ATTEMPTS} tentativi per ottenere extrasconti straordinari!!`;
-    console.log(msgAvvio);
+    const startMessage = formatMessage(MESSAGES.contest.start, {
+      LIVE_DURATION_MINUTES,
+      MAX_ATTEMPTS
+    });
+    console.log(startMessage);
     // Send the message also to the chat
     youtube.liveChatMessages.insert({
       part: 'snippet',
@@ -134,12 +208,12 @@ function listenChat(auth) {
           liveChatId,
           type: 'textMessageEvent',
           textMessageDetails: {
-            messageText: msgAvvio
+            messageText: startMessage
           }
         }
       }
     }).catch((err) => {
-      console.error('❌ Errore nell\'invio del messaggio di avvio concorso in chat:', err);
+      console.error('❌ Error sending contest start message to chat:', err);
     });
 
     // Initialize polling variables
@@ -151,7 +225,7 @@ function listenChat(auth) {
     function logAttempt(author, text, status) {
       if (!ENABLE_LOGS) return;
       const log = `[${new Date().toISOString()}] ${status} ${author}: "${text}"\n`;
-      if (status === '✅ Tentativo valido') {
+      if (status === '✅ Valid attempt') {
         fs.appendFileSync(LOG_ATTEMPTS_SUCCESS_FILE, log);
       } else {
         fs.appendFileSync(DISCARDS_LOG_FILE, log);
@@ -160,12 +234,12 @@ function listenChat(auth) {
     }
 
     // Set to track unique participants
-    const partecipantiUnici = new Set();
-    function logNuovoPartecipante(author) {
-      if (!partecipantiUnici.has(author)) {
-        partecipantiUnici.add(author);
-        const totale = partecipantiUnici.size;
-        const log = `[${new Date().toISOString()}] nuovo partecipante (${author}) (Totali: ${totale})\n`;
+    const uniqueParticipants = new Set();
+    function logNewParticipant(author) {
+      if (!uniqueParticipants.has(author)) {
+        uniqueParticipants.add(author);
+        const total = uniqueParticipants.size;
+        const log = `[${new Date().toISOString()}] new participant (${author}) (Total: ${total})\n`;
         fs.appendFileSync(LOG_ATTEMPTS_SUCCESS_FILE, log);
         console.log(log.trim());
       }
@@ -173,48 +247,48 @@ function listenChat(auth) {
 
     // Function to calculate the extra discount based on minute
     // Automatic function to calculate extra discount based on minute
-    function calcolaExtrasconto(minuto) {
-      for (const soglia of EXTRADISCOUNT_THRESHOLDS) {
-        if (minuto >= soglia.min && minuto <= soglia.max) {
-          return soglia.sconto;
+    function calculateExtraDiscount(minute) {
+      for (const threshold of EXTRADISCOUNT_THRESHOLDS) {
+        if (minute >= threshold.min && minute <= threshold.max) {
+          return threshold.discount;
         }
       }
       return 0;
     }
 
     // Function to find who got closest to the correct price
-    function trovaPiuVicino() {
+    function findClosest() {
       if (!EXTRA_DISCOUNT_FOR_THE_NEAREST) return null;
 
-      let piuVicino = null;
-      let distanzaMinima = Infinity;
+      let closest = null;
+      let minimumDistance = Infinity;
 
-      const prezzoGiusto = parseFloat(CORRECT_PRICE);
+      const correctPrice = parseFloat(CORRECT_PRICE);
 
-      for (const [utente, tentativi] of Object.entries(tentativiUtente)) {
-        for (const tentativo of tentativi) {
-          const distanza = Math.abs(tentativo.valore - prezzoGiusto);
-          if (distanza < distanzaMinima) {
-            distanzaMinima = distanza;
-            piuVicino = {
-              utente,
-              valore: tentativo.valore,
-              timestamp: tentativo.timestamp
+      for (const [user, attempts] of Object.entries(attemptsUser)) {
+        for (const attempt of attempts) {
+          const distance = Math.abs(attempt.value - correctPrice);
+          if (distance < minimumDistance) {
+            minimumDistance = distance;
+            closest = {
+              user,
+              value: attempt.value,
+              timestamp: attempt.timestamp
             };
           }
         }
       }
 
-      return piuVicino;
+      return closest;
     }
 
     // Timer for live duration
     const liveTimer = setTimeout(async () => {
-      console.log(`⏰ Tempo scaduto: ${LIVE_DURATION_MINUTES} minuti di live completati.`);
+      console.log(`⏰ Time expired: ${LIVE_DURATION_MINUTES} minutes of live completed.`);
 
       // First, send the exhausted attempts messages for those who haven't received them yet
-      for (const [author, tentativi] of Object.entries(tentativiPerUtente)) {
-        if (tentativi > MAX_ATTEMPTS && !tentativiEsauritiAnnunciati[author]) {
+      for (const [author, attempts] of Object.entries(attemptsForUser)) {
+        if (attempts > MAX_ATTEMPTS && !exhaustedAttemptsAnnounced[author]) {
           try {
             await youtube.liveChatMessages.insert({
               part: 'snippet',
@@ -223,18 +297,22 @@ function listenChat(auth) {
                   liveChatId,
                   type: 'textMessageEvent',
                   textMessageDetails: {
-                    messageText: `⛔ ${author}, hai superato il numero massimo di ${MAX_ATTEMPTS} tentativi disponibili. Il tuo ultimo tentativo ${ultimoTentativoEsaurito[author] || 'sconosciuto'} non verrà considerato valido.`
+                    messageText: formatMessage(MESSAGES.contest.attemptsExhausted, {
+                      author,
+                      MAX_ATTEMPTS,
+                      lastAttempt: lastAttemptWasExhausted[author] || 'unknown'
+                    })
                   }
                 }
               }
             });
             if (ENABLE_LOGS) {
-              fs.appendFileSync(ATTEMPTS_EXHAUSTED_LOG_FILE, `[${new Date().toISOString()}] Tentativi esauriti annunciati a fine gioco a ${author}\n`);
+              fs.appendFileSync(ATTEMPTS_EXHAUSTED_LOG_FILE, `[${new Date().toISOString()}] Exhausted attempts announced at end of game to ${author}\n`);
             }
-            tentativiEsauritiAnnunciati[author] = true;
-            console.log(`✅ Messaggio di tentativi esauriti inviato a ${author} a fine gioco`);
+            exhaustedAttemptsAnnounced[author] = true;
+            console.log(`✅ Exhausted attempts message sent to ${author} at end of game`);
           } catch (err) {
-            console.error(`❌ Errore nell'invio del messaggio di tentativi esauriti a ${author}:`, err);
+            console.error(`❌ Error sending exhausted attempts message to ${author}:`, err);
           }
         }
       }
@@ -246,15 +324,15 @@ function listenChat(auth) {
       if (!winnerAnnounced) {
         if (EXTRA_DISCOUNT_FOR_THE_NEAREST) {
             // With extra discount for the nearest: show the price and find the closest winner
-          const piuVicino = trovaPiuVicino();
-          if (piuVicino) {
-            const { utente, valore, timestamp } = piuVicino;
+          const closest = findClosest();
+          if (closest) {
+            const { user, value, timestamp } = closest;
             const msgTime = new Date(timestamp);
-            const minuto = Math.floor((msgTime - liveStartTime) / 60000) + 1;
-            const extrasconto = calcolaExtrasconto(minuto);
+            const minute = Math.floor((msgTime - liveStartTime) / 60000) + 1;
+            const extraDiscount = calculateExtraDiscount(minute);
 
             if (ENABLE_LOGS) {
-              fs.appendFileSync(LOG_ATTEMPTS_SUCCESS_FILE, `[${new Date().toISOString()}] PREMIO AL PIÙ VICINO: ${utente} con €${valore} (distanza: €${Math.abs(valore - parseFloat(CORRECT_PRICE)).toFixed(2)}) - Extrasconto: ${extrasconto}% - Minuto: ${minuto}\n`);
+              fs.appendFileSync(LOG_ATTEMPTS_SUCCESS_FILE, `[${new Date().toISOString()}] CLOSEST WINNER: ${user} with €${value} (distance: €${Math.abs(value - parseFloat(CORRECT_PRICE)).toFixed(2)}) - Extra discount: ${extraDiscount}% - Minute: ${minute}\n`);
             }
 
             try {
@@ -265,14 +343,20 @@ function listenChat(auth) {
                     liveChatId,
                     type: 'textMessageEvent',
                     textMessageDetails: {
-                      messageText: `⏰ Tempo scaduto! ${utente} si è avvicinato di più al prezzo giusto €${CORRECT_PRICE} con €${valore}. Ottieni un extrasconto del ${extrasconto}%! (Tentativo al minuto: ${minuto})`
+                      messageText: formatMessage(MESSAGES.contest.timeExpiredClosestWinner, {
+                        user,
+                        CORRECT_PRICE,
+                        value,
+                        extraDiscount,
+                        minute
+                      })
                     }
                   }
                 }
               });
-              console.log(`✅ Messaggio di premio al più vicino inviato a ${utente}!`);
+              console.log(`✅ Closest winner prize message sent to ${user}!`);
             } catch (err) {
-              console.error('❌ Errore nell\'invio del messaggio del premio al più vicino:', err);
+              console.error('❌ Error sending closest winner prize message:', err);
             }
           } else {
             try {
@@ -283,14 +367,16 @@ function listenChat(auth) {
                     liveChatId,
                     type: 'textMessageEvent',
                     textMessageDetails: {
-                      messageText: `⏰ Tempo scaduto! Il prezzo giusto era €${CORRECT_PRICE}. Nessuno ha partecipato al concorso!`
+                      messageText: formatMessage(MESSAGES.contest.timeExpiredNoParticipants, {
+                        CORRECT_PRICE
+                      })
                     }
                   }
                 }
               });
-              console.log("✅ Messaggio di fine gioco inviato!");
+              console.log("✅ End of game message sent!");
             } catch (err) {
-              console.error('❌ Errore nell\'invio del messaggio di fine gioco:', err);
+              console.error('❌ Error sending end of game message:', err);
             }
           }
         } else {
@@ -303,14 +389,14 @@ function listenChat(auth) {
                   liveChatId,
                   type: 'textMessageEvent',
                   textMessageDetails: {
-                    messageText: `⏰ Tempo scaduto! Nessun vincitore questa volta!`
+                    messageText: formatMessage(MESSAGES.contest.timeExpiredNoWinner, {})
                   }
                 }
               }
             });
-            console.log("✅ Messaggio di fine gioco inviato!");
+            console.log("✅ End of game message sent!");
           } catch (err) {
-            console.error('❌ Errore nell\'invio del messaggio di fine gioco:', err);
+            console.error('❌ Error sending end of game message:', err);
           }
         }
       }
@@ -368,29 +454,29 @@ function listenChat(auth) {
             if (!text) continue;
 
             // Log new participant if writing for the first time
-            logNuovoPartecipante(author);
+            logNewParticipant(author);
 
             // Only numbers without spaces, letters, or other symbols (only digits and an optional decimal point)
             if (!/^\d+(\.\d+)?$/.test(text)) {
-              logAttempt(author, text, '❌ Formato non valido (solo numeri, punto come separatore decimale, nessun altro carattere o spazio)');
+              logAttempt(author, text, '❌ Invalid format (only numbers, dot as decimal separator, no other characters or spaces)');
               continue;
             }
 
             const parsed = parseFloat(text);
             if (typeof parsed !== 'number' || isNaN(parsed)) {
-              logAttempt(author, text, '❌ Non è un numero valido');
+              logAttempt(author, text, '❌ Not a valid number');
               continue;
             }
-            const numero = parsed;
-            if (!tentativiPerUtente[author]) tentativiPerUtente[author] = 0;
-            if (!tentativiEsauritiAnnunciati[author]) tentativiEsauritiAnnunciati[author] = false;
+            const number = parsed;
+            if (!attemptsForUser[author]) attemptsForUser[author] = 0;
+            if (!exhaustedAttemptsAnnounced[author]) exhaustedAttemptsAnnounced[author] = false;
 
-            tentativiPerUtente[author]++;
+            attemptsForUser[author]++;
 
-            if (tentativiPerUtente[author] > MAX_ATTEMPTS) {
-                ultimoTentativoEsaurito[author] = numero; // Save the last exhausted attempt
-              logAttempt(author, text, '⚠️ Tentativi esauriti');
-              if (!tentativiEsauritiAnnunciati[author]) {
+            if (attemptsForUser[author] > MAX_ATTEMPTS) {
+                lastAttemptWasExhausted[author] = number; // Save the last exhausted attempt
+              logAttempt(author, text, '⚠️ Attempts exhausted');
+              if (!exhaustedAttemptsAnnounced[author]) {
                 try {
                   const resp = await youtube.liveChatMessages.insert({
                     part: 'snippet',
@@ -399,47 +485,55 @@ function listenChat(auth) {
                         liveChatId: liveChatId,
                         type: 'textMessageEvent',
                         textMessageDetails: {
-                    messageText: `⛔ ${author}, hai superato il numero massimo di ${MAX_ATTEMPTS} tentativi disponibili. Il tuo ultimo tentativo ${ultimoTentativoEsaurito[author] || 'sconosciuto'} non verrà considerato valido.`
+                    messageText: formatMessage(MESSAGES.contest.attemptsExhausted, {
+                      author,
+                      MAX_ATTEMPTS,
+                      lastAttempt: lastAttemptWasExhausted[author] || 'unknown'
+                    })
                   }
                       }
                     }
                   });
                   if (ENABLE_LOGS) {
-                    fs.appendFileSync(ATTEMPTS_EXHAUSTED_LOG_FILE, `[${new Date().toISOString()}] Tentativi esauriti annunciati a ${author}: ${JSON.stringify(resp.data)}\n`);
+                    fs.appendFileSync(ATTEMPTS_EXHAUSTED_LOG_FILE, `[${new Date().toISOString()}] Exhausted attempts announced to ${author}: ${JSON.stringify(resp.data)}\n`);
                   }
-                  tentativiEsauritiAnnunciati[author] = true;
+                  exhaustedAttemptsAnnounced[author] = true;
                 } catch (err) {
-                  console.error('Errore nell\'invio del messaggio di tentativi esauriti:', err);
+                  console.error('Error sending exhausted attempts message:', err);
                 }
               }
               continue;
             }
-            logAttempt(author, text, '✅ Tentativo valido');
+            logAttempt(author, text, '✅ Valid attempt');
 
             // Save the attempt with timestamp if enabled (only for valid attempts)
             if (EXTRA_DISCOUNT_FOR_THE_NEAREST) {
-              if (!tentativiUtente[author]) {
-                tentativiUtente[author] = [];
+              if (!attemptsUser[author]) {
+                attemptsUser[author] = [];
               }
-              tentativiUtente[author].push({
-                valore: numero,
+              attemptsUser[author].push({
+                value: number,
                 timestamp: new Date(msg.snippet.publishedAt).toISOString()
               });
             }
 
             // Send the victory message in chat to the user who guessed the exact price!!
-            if (!winnerAnnounced && numero === parseFloat(CORRECT_PRICE)) {
+            if (!winnerAnnounced && number === parseFloat(CORRECT_PRICE)) {
               winnerAnnounced = true;
                 clearTimeout(liveTimer); // Stop the live timer
                 // Calculate the minute at which the guess was made
-              let extrasconto = 0;
-              let minuto = 0;
+              let extraDiscount = 0;
+              let minute = 0;
               if (liveStartTime) {
                 const msgTime = new Date(msg.snippet.publishedAt);
-                minuto = Math.floor((msgTime - liveStartTime) / 60000) + 1;
-                extrasconto = calcolaExtrasconto(minuto);
+                minute = Math.floor((msgTime - liveStartTime) / 60000) + 1;
+                extraDiscount = calculateExtraDiscount(minute);
               }
               try {
+                // Log the winner if logging is enabled
+                if (ENABLE_LOGS) {
+                  fs.appendFileSync(LOG_ATTEMPTS_SUCCESS_FILE, `[${new Date().toISOString()}] EXACT WINNER: ${author} with €${CORRECT_PRICE} - Extra discount: ${extraDiscount}% - Minute: ${minute}\n`);
+                }
                 await youtube.liveChatMessages.insert({
                   part: 'snippet',
                   requestBody: {
@@ -447,7 +541,12 @@ function listenChat(auth) {
                       liveChatId,
                       type: 'textMessageEvent',
                       textMessageDetails: {
-                        messageText: `🎉 Complimenti ${author}! Hai indovinato il prezzo scontato esatto: €${CORRECT_PRICE}. Puoi acquistare il pack con un extrasconto del ${extrasconto}%. (Indovinato al minuto: ${minuto})`
+                        messageText: formatMessage(MESSAGES.contest.exactWinner, {
+                          author,
+                          CORRECT_PRICE,
+                          extraDiscount,
+                          minute
+                        })
                       }
                     }
                   }
@@ -459,14 +558,14 @@ function listenChat(auth) {
                       liveChatId,
                       type: 'textMessageEvent',
                       textMessageDetails: {
-                        messageText: '⛔ Non è più possibile effettuare tentativi per nessuno.'
+                        messageText: formatMessage(MESSAGES.contest.noMoreAttempts, {})
                       }
                     }
                   }
                 });
-                console.log("✅ Messaggio di vincita inviato!");
+                console.log("✅ Winner message sent!");
               } catch (err) {
-                console.error('❌ Errore nell\'invio del messaggio di vincita:', err);
+                console.error('❌ Error sending winner message:', err);
               }
               return;
             }
@@ -479,7 +578,7 @@ function listenChat(auth) {
         }
         setTimeout(pollChat, pollingInterval);
       } catch (err) {
-        console.error('Errore durante il polling:', err);
+        console.error('Error during polling:', err);
         setTimeout(pollChat, POLL_ERROR_RETRY);
       }
     }
@@ -492,7 +591,7 @@ fs.readFile(CLIENT_SECRET_PATH, (err, content) => {
   if (err) {
     const errorLog = {
       timestamp: new Date().toISOString(),
-      error: 'Errore nel leggere client_secret.json',
+      error: `Error reading ${CLIENT_SECRET_PATH}`,
       details: err.message || err
     };
     let logs = [];
@@ -505,7 +604,7 @@ fs.readFile(CLIENT_SECRET_PATH, (err, content) => {
     }
     logs.push(errorLog);
     fs.writeFileSync(ERROR_STARTING_LOG_FILE, JSON.stringify(logs, null, 2));
-    return console.log('Errore nel leggere client_secret.json:', err);
+    return console.log(`Error reading ${CLIENT_SECRET_PATH}:`, err);
   }
   authorize(JSON.parse(content), listenChat);
 });

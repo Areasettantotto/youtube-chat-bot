@@ -1,0 +1,41 @@
+{
+  "available_languages": {
+    "english": {
+      "file": "messages.json",
+      "name": "English",
+      "flag": "🇬🇧",
+      "description": "Default English messages"
+    },
+    "italian": {
+      "file": "messages-italian.json",
+      "name": "Italiano",
+      "flag": "🇮🇹",
+      "description": "Messaggi in italiano"
+    },
+    "russian": {
+      "file": "messages-russian.json",
+      "name": "Русский",
+      "flag": "🇷🇺",
+      "description": "Сообщения на русском языке"
+    },
+    "chinese": {
+      "file": "messages-cinese.json",
+      "name": "中文",
+      "flag": "🇨🇳",
+      "description": "中文消息"
+    },
+    "arabic": {
+      "file": "messages-arabo.json",
+      "name": "العربية",
+      "flag": "🇸🇦",
+      "description": "رسائل باللغة العربية"
+    }
+  },
+  "default": "english",
+  "fallback": "english",
+  "metadata": {
+    "description": "Language configuration for YouTube Chat Bot messages",
+    "version": "1.0.0",
+    "last_updated": "2025-07-22"
+  }
+}

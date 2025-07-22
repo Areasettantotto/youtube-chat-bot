@@ -1,0 +1,25 @@
+{
+  "contest": {
+    "start": "🟢 Inizio del concorso, da questo momento avete {LIVE_DURATION_MINUTES} minuti di tempo e {MAX_ATTEMPTS} tentativi per ottenere extrasconti straordinari!!",
+    "attemptsExhausted": "⛔ {author}, hai superato il numero massimo di {MAX_ATTEMPTS} tentativi disponibili. Il tuo ultimo tentativo {lastAttempt} non verrà considerato valido.",
+    "timeExpiredClosestWinner": "⏰ Tempo scaduto! {user} si è avvicinato di più al prezzo giusto €{CORRECT_PRICE} con €{value}. Ottieni un extrasconto del {extraDiscount}%! (Tentativo al minuto: {minute})",
+    "timeExpiredNoParticipants": "⏰ Tempo scaduto! Il prezzo giusto era €{CORRECT_PRICE}. Nessuno ha partecipato al concorso!",
+    "timeExpiredNoWinner": "⏰ Tempo scaduto! Nessun vincitore questa volta!",
+    "exactWinner": "🎉 Complimenti {author}! Hai indovinato il prezzo scontato esatto: €{CORRECT_PRICE}. Puoi acquistare il pack con un extrasconto del {extraDiscount}%. (Indovinato al minuto: {minute})",
+    "noMoreAttempts": "⛔ Non è più possibile effettuare tentativi per nessuno."
+  },
+  "metadata": {
+    "description": "Messaggi per gli utenti inviati nella chat di YouTube - Versione Italiana",
+    "placeholders": {
+      "LIVE_DURATION_MINUTES": "Durata della live in minuti",
+      "MAX_ATTEMPTS": "Numero massimo di tentativi per utente",
+      "author": "Nome utente del partecipante",
+      "user": "Nome utente del vincitore/partecipante",
+      "lastAttempt": "Valore dell'ultimo tentativo esaurito",
+      "CORRECT_PRICE": "Il prezzo corretto da indovinare",
+      "value": "Valore del prezzo indovinato dall'utente",
+      "extraDiscount": "Percentuale di extrasconto",
+      "minute": "Minuto in cui è stato fatto il tentativo"
+    }
+  }
+}
