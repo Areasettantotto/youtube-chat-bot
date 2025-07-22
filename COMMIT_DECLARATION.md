@@ -1,8 +1,8 @@
 # COMMIT DECLARATION - INTELLECTUAL PROPERTY
 
-**Author:** Marco Busato (GitHub: @Areasettantotto)  
-**Date:** July 22, 2025  
-**Repository:** https://github.com/Areasettantotto/youtube-chat-bot  
+**Author:** Marco Busato (GitHub: @Areasettantotto)
+**Date:** July 22, 2025
+**Repository:** https://github.com/Areasettantotto/youtube-chat-bot
 **Commit Hash:** 4a32f47910ce2a317f332a2e64f3633bcb1ef8ba
 
 ## DECLARATION OF ORIGINAL AUTHORSHIP
@@ -18,12 +18,12 @@ I, Marco Busato, hereby declare that:
 
 ## PROPRIETARY NOTICE
 
-This software is proprietary and confidential. Any unauthorized copying, 
-distribution, modification, or use is strictly prohibited and may result 
+This software is proprietary and confidential. Any unauthorized copying,
+distribution, modification, or use is strictly prohibited and may result
 in legal action including but not limited to:
 
 - DMCA takedown notices
-- Copyright infringement claims  
+- Copyright infringement claims
 - Legal damages and attorney fees
 - Injunctive relief
 
@@ -40,6 +40,6 @@ in legal action including but not limited to:
 For licensing inquiries: areasettantotto@icloud.com
 
 ---
-**Digital Signature:** Marco Busato  
-**Timestamp:** 2025-07-22 21:35:28 UTC  
+**Digital Signature:** Marco Busato
+**Timestamp:** 2025-07-22 21:35:28 UTC
 **Legal Status:** Proprietary - All Rights Reserved

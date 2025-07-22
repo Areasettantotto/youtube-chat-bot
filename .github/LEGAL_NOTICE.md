@@ -21,7 +21,7 @@ This repository contains proprietary software owned exclusively by **Marco Busat
 
 ## ⚖️ LEGAL PROTECTION
 
-This software is protected under international copyright law. 
+This software is protected under international copyright law.
 
 **Violations may result in:**
 - DMCA takedown notices
