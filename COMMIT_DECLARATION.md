@@ -3,7 +3,7 @@
 **Author:** Marco Busato (GitHub: @Areasettantotto)  
 **Date:** July 22, 2025  
 **Repository:** https://github.com/Areasettantotto/youtube-chat-bot  
-**Commit Hash:** [Will be generated after commit]
+**Commit Hash:** 4a32f47910ce2a317f332a2e64f3633bcb1ef8ba
 
 ## DECLARATION OF ORIGINAL AUTHORSHIP
 
@@ -41,5 +41,5 @@ For licensing inquiries: areasettantotto@icloud.com
 
 ---
 **Digital Signature:** Marco Busato  
-**Timestamp:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")  
+**Timestamp:** 2025-07-22 21:35:28 UTC  
 **Legal Status:** Proprietary - All Rights Reserved
