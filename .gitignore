@@ -1,10 +1,11 @@
 # Node modules
 node_modules/
 
-# Google Token
+# Google Authentication & API Keys
 token.json
+client_secret.json
 
-# Local files configuration
+# Environment Configuration (SENSITIVE DATA)
 .env
 
 # Log Files
@@ -12,11 +13,21 @@ logs/*
 !logs/.gitkeep
 *.log
 
-# Client secret JSON
-client_secret.json
-
-# Desktop version
+# Desktop version (if exists)
 index-desktop.js
 
-# instructions Google Console
+# Google Console Instructions
 google-console-create-project.pdf
+
+# Development files
+.DS_Store
+.vscode/
+*.tmp
+*.swp
+
+# Copyright Protection - These files MUST be included:
+# - LICENSE
+# - COMMIT_DECLARATION.md
+# - .github/LEGAL_NOTICE.md
+# - README.md
+# - check-copyright.sh

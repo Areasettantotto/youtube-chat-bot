@@ -1,9 +1,24 @@
 {
   "name": "youtube-chat-bot",
   "version": "1.0.0",
+  "description": "YouTube Live Chat Contest Bot with multilingual support",
   "type": "module",
   "main": "index.js",
-  "license": "MIT",
+  "author": "Marco Busato <areasettantotto@icloud.com> (https://github.com/Areasettantotto)",
+  "license": "UNLICENSED",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Areasettantotto/youtube-chat-bot"
+  },
+  "keywords": [
+    "youtube",
+    "chat",
+    "bot",
+    "contest",
+    "live",
+    "multilingual"
+  ],
   "dependencies": {
     "dotenv": "^16.6.1",
     "googleapis": "^132.0.0",

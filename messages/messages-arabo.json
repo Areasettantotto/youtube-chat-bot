@@ -1,6 +1,6 @@
 {
   "contest": {
-    "start": "🟢 بدأت المسابقة! لديكم {LIVE_DURATION_MINUTES} دقيقة و {MAX_ATTEMPTS} محاولات للحصول على خصومات إضافية استثنائية!!",
+    "start": "🤖 [بوت] 🟢 بدأت المسابقة! لديكم {LIVE_DURATION_MINUTES} دقيقة و {MAX_ATTEMPTS} محاولات للحصول على خصومات إضافية استثنائية!!",
     "attemptsExhausted": "⛔ {author}، لقد تجاوزت العدد الأقصى من المحاولات المتاحة {MAX_ATTEMPTS}. محاولتك الأخيرة {lastAttempt} لن تعتبر صالحة.",
     "timeExpiredClosestWinner": "⏰ انتهى الوقت! {user} اقترب أكثر من السعر الصحيح €{CORRECT_PRICE} بـ €{value}. احصل على خصم إضافي {extraDiscount}%! (المحاولة في الدقيقة: {minute})",
     "timeExpiredNoParticipants": "⏰ انتهى الوقت! السعر الصحيح كان €{CORRECT_PRICE}. لم يشارك أحد في المسابقة!",

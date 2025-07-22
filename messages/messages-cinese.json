@@ -1,6 +1,6 @@
 {
   "contest": {
-    "start": "🟢 比赛开始！您有 {LIVE_DURATION_MINUTES} 分钟时间和 {MAX_ATTEMPTS} 次机会获得超值额外折扣！！",
+    "start": "🤖 [机器人] 🟢 比赛开始！您有 {LIVE_DURATION_MINUTES} 分钟时间和 {MAX_ATTEMPTS} 次机会获得超值额外折扣！！",
     "attemptsExhausted": "⛔ {author}，您已超过最大可用尝试次数 {MAX_ATTEMPTS}。您的最后一次尝试 {lastAttempt} 将不被视为有效。",
     "timeExpiredClosestWinner": "⏰ 时间到！{user} 最接近正确价格 €{CORRECT_PRICE}，猜测价格为 €{value}。获得额外折扣 {extraDiscount}%！（尝试时间：第 {minute} 分钟）",
     "timeExpiredNoParticipants": "⏰ 时间到！正确价格是 €{CORRECT_PRICE}。没有人参加比赛！",

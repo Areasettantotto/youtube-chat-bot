@@ -1,3 +1,13 @@
+/*
+ * YouTube Chat Bot - Contest Manager
+ * Copyright (c) 2025 Marco Busato (GitHub: areasettantotto)
+ * All Rights Reserved - Proprietary Software
+ *
+ * This software is the exclusive property of Marco Busato.
+ * Unauthorized copying, distribution, or use is strictly prohibited.
+ * See LICENSE file for full terms and conditions.
+ */
+
 import fs from 'fs';
 import { google } from 'googleapis';
 import dotenv from 'dotenv';

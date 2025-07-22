@@ -1,6 +1,6 @@
 {
   "contest": {
-    "start": "🟢 Contest started, from now you have {LIVE_DURATION_MINUTES} minutes and {MAX_ATTEMPTS} attempts to get extraordinary extra discounts!!",
+    "start": "🤖 [BOT] 🟢 Contest started, from now you have {LIVE_DURATION_MINUTES} minutes and {MAX_ATTEMPTS} attempts to get extraordinary extra discounts!!",
     "attemptsExhausted": "⛔ {author}, you have exceeded the maximum number of {MAX_ATTEMPTS} available attempts. Your last attempt {lastAttempt} will not be considered valid.",
     "timeExpiredClosestWinner": "⏰ Time expired! {user} got closest to the correct price €{CORRECT_PRICE} with €{value}. Get an extra discount of {extraDiscount}%! (Attempt at minute: {minute})",
     "timeExpiredNoParticipants": "⏰ Time expired! The correct price was €{CORRECT_PRICE}. Nobody participated in the contest!",

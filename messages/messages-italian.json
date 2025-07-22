@@ -1,6 +1,6 @@
 {
   "contest": {
-    "start": "🟢 Inizio del concorso, da questo momento avete {LIVE_DURATION_MINUTES} minuti di tempo e {MAX_ATTEMPTS} tentativi per ottenere extrasconti straordinari!!",
+    "start": "🤖 [BOT] 🟢 Inizio del concorso, da questo momento avete {LIVE_DURATION_MINUTES} minuti di tempo e {MAX_ATTEMPTS} tentativi per ottenere extrasconti straordinari!!",
     "attemptsExhausted": "⛔ {author}, hai superato il numero massimo di {MAX_ATTEMPTS} tentativi disponibili. Il tuo ultimo tentativo {lastAttempt} non verrà considerato valido.",
     "timeExpiredClosestWinner": "⏰ Tempo scaduto! {user} si è avvicinato di più al prezzo giusto €{CORRECT_PRICE} con €{value}. Ottieni un extrasconto del {extraDiscount}%! (Tentativo al minuto: {minute})",
     "timeExpiredNoParticipants": "⏰ Tempo scaduto! Il prezzo giusto era €{CORRECT_PRICE}. Nessuno ha partecipato al concorso!",
