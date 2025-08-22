@@ -1,0 +1,29 @@
+{
+  "contest": {
+    "start": "🤖 [BOT] 🟢 Contest started, from now you have {LIVE_DURATION_MINUTES} minutes and {MAX_ATTEMPTS} attempts to get extraordinary extra discounts!!",
+    "attemptsExhausted": "⛔ 🤖 [BOT] {author}, you have exceeded the maximum number of {MAX_ATTEMPTS} available attempts. Your last attempt {lastAttempt} (and subsequent ones) will not be considered valid.",
+    "periodicExhaustedAnnouncement": "⚠️ 🤖 [BOT] The following users have exhausted their {MAX_ATTEMPTS} attempts: {usersList} (and {remainingCount} more). Their future attempts will not be considered.",
+    "periodicExhaustedAnnouncementSimple": "⚠️ 🤖 [BOT] The following users have exhausted their {MAX_ATTEMPTS} attempts: {usersList}. Their future attempts will not be considered.",
+    "timeExpiredClosestWinner": "⏰ Time is up and {user} got closest to the correct price — €{CORRECT_PRICE} — with an offer of €{value}! Well done! You earned an extra discount of {extraDiscount}% 🎁 (Attempt at minute {minute})",
+    "timeExpiredNoParticipants": "⏰ Time expired! The correct price was €{CORRECT_PRICE}. Nobody participated in the contest!",
+    "timeExpiredNoWinner": "⏰ Time expired! No winner this time!",
+    "exactWinner": "🎉 Congratulations {author}! You guessed the exact discounted price: €{CORRECT_PRICE}. You can buy the pack with an extra discount of {extraDiscount}%. (Guessed at minute: {minute})",
+    "noMoreAttempts": "⛔ No more attempts are allowed for anyone."
+  },
+  "metadata": {
+    "description": "User-facing messages sent to YouTube chat",
+    "placeholders": {
+      "LIVE_DURATION_MINUTES": "Duration of the live stream in minutes",
+      "MAX_ATTEMPTS": "Maximum number of attempts allowed per user",
+      "author": "Username of the participant",
+      "user": "Username of the winner/participant",
+      "lastAttempt": "Value of the last exhausted attempt",
+      "usersList": "Comma-separated list of users who exhausted attempts",
+      "remainingCount": "Number of additional users not shown in the list",
+      "CORRECT_PRICE": "The correct price to guess",
+      "value": "Price value guessed by user",
+      "extraDiscount": "Extra discount percentage",
+      "minute": "Minute when the attempt was made"
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "liveDurationSec": 12,
+  "maxAttempts": 3,
+  "correctPrice": 60.56,
+  "extraDiscountPercent": 60,
+  "attempts": [
+  { "user": "User1", "message": "61.00", "offsetSec": 1 },
+  { "user": "User2", "message": "62.00", "offsetSec": 2 },
+  { "user": "User3", "message": "60.00", "offsetSec": 3 },
+  { "user": "User4", "message": "59.50", "offsetSec": 4 },
+  { "user": "User5", "message": "60.40", "offsetSec": 5 },
+  { "user": "User6", "message": "60.45", "offsetSec": 6 },
+  { "user": "User7", "message": "60.56", "offsetSec": 10 },
+  { "user": "User8", "message": "60.56", "offsetSec": 11 }
+  ]
+}

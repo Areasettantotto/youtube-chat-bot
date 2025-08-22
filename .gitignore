@@ -1,0 +1,23 @@
+# Node modules
+node_modules/
+
+# Google Token
+token.json
+
+# Local files configuration
+.env
+
+# Log Files
+logs/*
+!logs/.gitkeep
+*.log
+
+# Client secret JSON
+client_secret.json
+
+# Desktop version
+index-desktop.js
+
+# instructions Google Console
+google-console-create-project.pdf
+version_production/

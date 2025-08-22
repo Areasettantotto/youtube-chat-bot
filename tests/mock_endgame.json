@@ -1,0 +1,11 @@
+{
+  "liveDurationSec": 20,
+  "maxAttempts": 3,
+  "correctPrice": "60.56",
+  "extraDiscountPercent": 60,
+  "attempts": [
+    { "offsetSec": 1, "user": "Marco Busato", "message": "1" },
+    { "offsetSec": 2, "user": "Marco Busato", "message": "2" },
+    { "offsetSec": 18, "user": "Marco Busato", "message": "60,56" }
+  ]
+}

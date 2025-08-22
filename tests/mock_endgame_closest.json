@@ -1,0 +1,12 @@
+{
+  "liveDurationSec": 3,
+  "maxAttempts": 3,
+  "correctPrice": "60.56",
+  "extraDiscountPercent": 50,
+  "extraDiscountForNearest": true,
+  "attempts": [
+    { "offsetSec": 0.2, "user": "Alice", "message": "59,00" },
+    { "offsetSec": 1.0, "user": "Bob", "message": "60,00" },
+    { "offsetSec": 1.8, "user": "Carol", "message": "60,30" }
+  ]
+}

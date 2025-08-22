@@ -1,0 +1,29 @@
+{
+  "contest": {
+    "start": "🤖 [机器人] 🟢 比赛开始！您有 {LIVE_DURATION_MINUTES} 分钟时间和 {MAX_ATTEMPTS} 次机会获得超值额外折扣！！",
+    "attemptsExhausted": "⛔ 🤖 [机器人] {author}，您已超过最大可用尝试次数 {MAX_ATTEMPTS}。您的最后一次尝试 {lastAttempt} （及后续尝试）将不被视为有效。",
+    "periodicExhaustedAnnouncement": "⚠️ 🤖 [机器人] 以下用户已用完 {MAX_ATTEMPTS} 次尝试机会：{usersList} （还有 {remainingCount} 个）。他们今后的尝试将不被考虑。",
+    "periodicExhaustedAnnouncementSimple": "⚠️ 🤖 [机器人] 以下用户已用完 {MAX_ATTEMPTS} 次尝试机会：{usersList}。他们今后的尝试将不被考虑。",
+    "timeExpiredClosestWinner": "⏰ 时间到了，{user} 最接近正确价格 — €{CORRECT_PRICE} — 出价为 €{value}！做得好！您获得了额外折扣 {extraDiscount}% 🎁 （尝试时间：第 {minute} 分钟）",
+    "timeExpiredNoParticipants": "⏰ 时间到！正确价格是 €{CORRECT_PRICE}。没有人参加比赛！",
+    "timeExpiredNoWinner": "⏰ 时间到！这次没有获胜者！",
+    "exactWinner": "🎉 恭喜 {author}！您猜中了确切的折扣价格：€{CORRECT_PRICE}。您可以以额外折扣 {extraDiscount}% 购买套装。（猜中时间：第 {minute} 分钟）",
+    "noMoreAttempts": "⛔ 任何人都不能再进行尝试了。"
+  },
+  "metadata": {
+    "description": "发送到 YouTube 聊天的用户消息 - 中文版本",
+    "placeholders": {
+      "LIVE_DURATION_MINUTES": "直播持续时间（分钟）",
+      "MAX_ATTEMPTS": "每个用户允许的最大尝试次数",
+      "author": "参与者用户名",
+      "user": "获胜者/参与者用户名",
+      "lastAttempt": "最后一次无效尝试的值",
+      "usersList": "用完尝试次数的用户列表（逗号分隔）",
+      "remainingCount": "未在列表中显示的其他用户数量",
+      "CORRECT_PRICE": "需要猜测的正确价格",
+      "value": "用户猜测的价格值",
+      "extraDiscount": "额外折扣百分比",
+      "minute": "进行尝试的分钟数"
+    }
+  }
+}

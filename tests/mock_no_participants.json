@@ -1,0 +1,8 @@
+{
+  "liveDurationSec": 1,
+  "maxAttempts": 3,
+  "correctPrice": 60.56,
+  "attempts": [],
+  "extraDiscountForNearest": true,
+  "extraDiscountPercent": 10
+}

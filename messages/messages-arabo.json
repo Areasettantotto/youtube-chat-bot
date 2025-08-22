@@ -1,0 +1,29 @@
+{
+  "contest": {
+    "start": "🤖 [بوت] 🟢 بدأت المسابقة! لديكم {LIVE_DURATION_MINUTES} دقيقة و {MAX_ATTEMPTS} محاولات للحصول على خصومات إضافية استثنائية!!",
+    "attemptsExhausted": "⛔ 🤖 [بوت] {author}، لقد تجاوزت العدد الأقصى من المحاولات المتاحة {MAX_ATTEMPTS}. محاولتك الأخيرة {lastAttempt} (والمحاولات اللاحقة) لن تعتبر صالحة.",
+    "periodicExhaustedAnnouncement": "⚠️ 🤖 [بوت] المستخدمون التالون استنفدوا محاولاتهم الـ {MAX_ATTEMPTS}: {usersList} (و {remainingCount} آخرين). محاولاتهم المستقبلية لن تُعتبر.",
+    "periodicExhaustedAnnouncementSimple": "⚠️ 🤖 [بوت] المستخدمون التالون استنفدوا محاولاتهم الـ {MAX_ATTEMPTS}: {usersList}. محاولاتهم المستقبلية لن تُعتبر.",
+    "timeExpiredClosestWinner": "⏰ انتهى الوقت و {user} اقترب أكثر من السعر الصحيح — €{CORRECT_PRICE} — بعرض €{value}! أحسنت! لقد حصلت على خصم إضافي {extraDiscount}% 🎁 (المحاولة في الدقيقة {minute})",
+    "timeExpiredNoParticipants": "⏰ انتهى الوقت! السعر الصحيح كان €{CORRECT_PRICE}. لم يشارك أحد في المسابقة!",
+    "timeExpiredNoWinner": "⏰ انتهى الوقت! لا يوجد فائز هذه المرة!",
+    "exactWinner": "🎉 تهانينا {author}! لقد خمنت السعر المخفض الدقيق: €{CORRECT_PRICE}. يمكنك شراء الحزمة بخصم إضافي {extraDiscount}%. (خمنت في الدقيقة: {minute})",
+    "noMoreAttempts": "⛔ لا يُسمح بالمزيد من المحاولات لأي شخص."
+  },
+  "metadata": {
+    "description": "رسائل المستخدمين المرسلة إلى دردشة يوتيوب - النسخة العربية",
+    "placeholders": {
+      "LIVE_DURATION_MINUTES": "مدة البث المباشر بالدقائق",
+      "MAX_ATTEMPTS": "العدد الأقصى من المحاولات المسموح بها لكل مستخدم",
+      "author": "اسم المشارك",
+      "user": "اسم الفائز/المشارك",
+      "lastAttempt": "قيمة المحاولة الأخيرة المرفوضة",
+      "usersList": "قائمة المستخدمين الذين استنفدوا المحاولات مفصولة بفواصل",
+      "remainingCount": "عدد المستخدمين الإضافيين غير المعروضين في القائمة",
+      "CORRECT_PRICE": "السعر الصحيح المطلوب تخمينه",
+      "value": "قيمة السعر التي خمنها المستخدم",
+      "extraDiscount": "نسبة الخصم الإضافي",
+      "minute": "الدقيقة التي تمت فيها المحاولة"
+    }
+  }
+}

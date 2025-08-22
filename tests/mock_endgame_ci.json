@@ -1,0 +1,10 @@
+{
+  "liveDurationSec": 2,
+  "maxAttempts": 3,
+  "correctPrice": "60.56",
+  "extraDiscountPercent": 60,
+  "attempts": [
+    { "offsetSec": 0.1, "user": "CI Test", "message": "1" },
+    { "offsetSec": 1.0, "user": "CI Test", "message": "60,56" }
+  ]
+}
