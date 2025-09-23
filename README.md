@@ -2,6 +2,8 @@
 
 **Copyright (c) 2025 Marco Busato - All Rights Reserved**
 
+Official website: https://youtube-live-chat-guess.onrender.com/
+
 An advanced bot for managing contests in YouTube Live Chat, featuring multilingual support, detailed logging, attempt management, automatic announcements, and flexible configuration via `.env` file.
 
 ## 🚀 Main Features
@@ -124,6 +126,7 @@ This software is **PROPRIETARY** and the exclusive intellectual property of **Ma
 
 ## 📧 Contact
 For licensing or legal inquiries:
+- Website: https://youtube-live-chat-guess.onrender.com/
 - Email: areasettantotto@icloud.com
 - GitHub: [@Areasettantotto](https://github.com/Areasettantotto)
 
